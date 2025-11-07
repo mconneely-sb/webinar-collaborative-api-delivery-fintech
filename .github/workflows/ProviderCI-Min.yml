@@ -63,7 +63,7 @@ jobs:
           swaggerhub api:validate $swaggerhub_owner/$swaggerhub_api_name/$swaggerhub_api_version -c
   
   test-local:
-    needs: validate-openapi-against-rules
+    needs: setup
     runs-on: ubuntu-latest
     env:
       application_name: ${{ needs.setup.outputs.application_name }}
