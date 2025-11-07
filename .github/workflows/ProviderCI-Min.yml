@@ -1,0 +1,111 @@
+name: Provider-API-AzureFunction-CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      application_name:
+        description: name_of_provider
+        required: true
+        default: 'SmartBearCoin-Payee-Provider'
+      demo_deploy:
+        description: skip deployment steps for demo
+        required: true
+        default: 'false'
+  # push:
+  #   paths:
+  #     - 'provider_azure_function/**'
+  #     - '.github/workflows/ProviderCI.yml'
+  #     - 'oas/**'
+  # pull_request:
+  #   branches: ['main']
+  #   paths:
+  #     - '.github/workflows/ProviderCI.yml'
+  #     - 'provider_azure_function/**'
+  #     - 'oas/**'
+
+env:
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'provider_azure_function' # set this to the path to your web app project, defaults to the repository root
+  DOTNET_VERSION: '7.0.302' # set this to the dotnet version to use
+  demo_deploy: true
+  SWAGGERHUB_API_KEY: ${{ secrets.SWAGGERHUB_API_KEY }}
+
+jobs:
+  setup:
+    name: 🏗️ setup
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "application_name=${application_name:-${application_name_default}}" >> $GITHUB_ENV
+    env:
+      application_name: ${{ github.event.inputs.application_name }}
+      application_name_default: SmartBearCoin-Payee-Provider
+    outputs:
+      application_name: ${{ env.application_name }}
+
+  test-local:
+    needs: setup
+    runs-on: ubuntu-latest
+    env:
+      application_name: ${{ needs.setup.outputs.application_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 7.0.x
+      - name: Install core tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install azure-functions-core-tools-4
+      - name: Fix dotnet func perms
+        run: |
+          cd provider_azure_function
+          sudo chmod +x /usr/lib/azure-functions-core-tools-4/in-proc6/func
+          echo '{
+            "IsEncrypted": false,
+            "Values": {
+              "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated"
+            },
+            "ConnectionStrings": {}
+          }' > local.settings.json
+          dotnet restore
+      - name: get version of OAS
+        run: |
+          sudo snap install yq && 
+          OAS_VERSION=$(yq '.info.version' oas/openapi.yaml)
+          echo "OAS_VERSION=${OAS_VERSION}" >> $GITHUB_ENV 
+          UNIQUE_VERSION=${OAS_VERSION}-${{ github.sha }}-service
+          echo "version=${UNIQUE_VERSION}" >> $GITHUB_ENV
+      - name: merge openapi spec
+        run: |
+          npx -y oas-merge ./oas/openapi.yaml
+      - name: Test
+        run: chmod ugo+rwx ReadyAPI_Tests && ./startServerAndTest.sh
+        env:
+          PROJECT_FOLDER: ReadyAPI_Tests
+          PROJECT_FILE: 'SmartBearCoin-Payee-Provider-readyapi-project.xml'
+          SLM_API_KEY: ${{ secrets.SLM_API_KEY }}
+          SERVER_DIR: provider_azure_function
+          SERVER_COMMAND: 'func start --csharp'
+          WAIT_FOR: 'http://localhost:7071'
+          ENDPOINT: http://localhost:7071/api
+      - uses: pactflow/actions/publish-provider-contract@v2
+        if: success()
+        with:
+          broker_url: https://mconneely.pactflow.io
+          token: ${{ secrets.PACT_BROKER_TOKEN }}
+          application_name: ${{ needs.setup.outputs.application_name }}
+          contract: oas/openapi-transformed.json
+          verification_results: ReadyAPI_Tests/report.xml
+      - uses: pactflow/actions/publish-provider-contract@v2
+        if: failure()
+        with:
+          broker_url: https://mconneely.pactflow.io
+          token: ${{ secrets.PACT_BROKER_TOKEN }}
+          application_name: ${{ needs.setup.outputs.application_name }}
+          contract: oas/openapi-transformed.json
+          verification_results: ReadyAPI_Tests/report.xml
+          verification_exit_code: 1
+    outputs:
+      version: ${{ env.version }}
+
+          
