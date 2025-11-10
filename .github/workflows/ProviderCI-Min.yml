@@ -55,7 +55,11 @@ jobs:
       - name: Extract version
         id: openapi
         run: echo "version=$(yq '.info.version' ./oas/openapi.yaml)" >> "$GITHUB_OUTPUT"
-      - run: echo "Version is ${{ steps.openapi.outputs.version }}"
+    env:
+      oad_ver: ${{ steps.openapi.outputs.version }}"
+    outputs:
+      oas_version: ${{ env.oad_ver }}
+   
 
         
   validate-openapi-against-rules:
@@ -70,12 +74,12 @@ jobs:
         env:
           SWAGGERHUB_API_KEY: ${{secrets.SWAGGERHUB_API_KEY}}
         run: |
-          swaggerhub api:get $swaggerhub_owner/$swaggerhub_api_name/$swaggerhub_api_version
+          swaggerhub api:get $swaggerhub_owner/$swaggerhub_api_name/$oas_version
       - name: Validate definition
         env:
           SWAGGERHUB_API_KEY: ${{secrets.SWAGGERHUB_API_KEY}}      
         run: |
-          swaggerhub api:validate $swaggerhub_owner/$swaggerhub_api_name/$swaggerhub_api_version -c
+          swaggerhub api:validate $swaggerhub_owner/$swaggerhub_api_name/$oas_version -c
   
   test-local:
     needs: validate-openapi-against-rules
