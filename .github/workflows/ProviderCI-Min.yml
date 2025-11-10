@@ -61,7 +61,7 @@ jobs:
           UNIQUE_VERSION=${OAS_VERSION}-${{ github.sha }}-service
           echo "version=${UNIQUE_VERSION}" >> $GITHUB_ENV
     outputs:
-      version: ${{ env.version }}
+      openapi_version: ${{ env.version }}
    
       
   validate-openapi-against-rules:
@@ -75,12 +75,12 @@ jobs:
         env:
           SWAGGERHUB_API_KEY: ${{secrets.SWAGGERHUB_API_KEY}}
         run: |
-          swaggerhub api:get $swaggerhub_owner/$swaggerhub_api_name/$oas_version
+          swaggerhub api:get $swaggerhub_owner/$swaggerhub_api_name/$openapi_version
       - name: Validate definition
         env:
           SWAGGERHUB_API_KEY: ${{secrets.SWAGGERHUB_API_KEY}}      
         run: |
-          swaggerhub api:validate $swaggerhub_owner/$swaggerhub_api_name/${{ needs.read-openapi-version.outputs.version }} -c
+          swaggerhub api:validate $swaggerhub_owner/$swaggerhub_api_name/$openapi_version -c
   
   test-local:
     needs: validate-openapi-against-rules
