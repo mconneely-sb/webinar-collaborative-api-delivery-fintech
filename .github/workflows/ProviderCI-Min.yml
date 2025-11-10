@@ -47,13 +47,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       # Run yq as an action to read the field
-      - name: Read info.version with yq
+      - name: Install yq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yq
+      - name: Extract version
         id: openapi
-        uses: mikefarah/yq@v4
-        with:
-          bash: yq '.info.version' .oas/openapi.yaml
+        run: echo "version=$(yq '.info.version' ./openapi.yaml)" >> "$GITHUB_OUTPUT"
+      - run: echo "Version is ${{ steps.openapi.outputs.version }}"
+
         
   validate-openapi-against-rules:
     runs-on: ubuntu-latest
