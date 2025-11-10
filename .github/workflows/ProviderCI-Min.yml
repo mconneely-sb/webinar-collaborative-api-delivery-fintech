@@ -54,13 +54,12 @@ jobs:
           sudo apt-get install -y yq
       - name: Extract version
         id: openapi
-        run: echo "version=$(yq '.info.version' ./oas/openapi.yaml)" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(yq '.info.version' ./oas/openapi.yaml)" >> "$GITHUB_ENV"
     env:
-      oad_ver: ${{ steps.openapi.outputs.version }}"
+      oad_ver: $version
     outputs:
       oas_version: ${{ env.oad_ver }}
    
-
         
   validate-openapi-against-rules:
     runs-on: ubuntu-latest
