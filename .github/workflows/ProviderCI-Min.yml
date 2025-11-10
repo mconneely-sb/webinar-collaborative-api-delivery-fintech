@@ -60,7 +60,7 @@ jobs:
           UNIQUE_VERSION=${OAS_VERSION}-${{ github.sha }}-service
           echo "version=${UNIQUE_VERSION}" >> $GITHUB_ENV
     outputs:
-      openapi_version: ${{ env.version }}
+      openapi_version: ${{ env.OAS_VERSION }}
    
       
   validate-openapi-against-rules:
@@ -82,7 +82,7 @@ jobs:
           swaggerhub api:validate $swaggerhub_owner/$swaggerhub_api_name/${{ needs.read-openapi-version.outputs.openapi_version }} -c
   
   test-local:
-    needs: validate-openapi-against-rules
+    needs: [setup, validate-openapi-against-rules]
     runs-on: ubuntu-latest
     env:
       application_name: ${{ needs.setup.outputs.application_name }}
