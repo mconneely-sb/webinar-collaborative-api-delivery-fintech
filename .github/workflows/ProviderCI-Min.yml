@@ -50,12 +50,8 @@ jobs:
       # Run yq as an action to read the field
       - name: Install yq
         run: |
-          sudo apt-get update
-          sudo apt-get install -y yq
-      - name: Extract version
-        id: openapi
-        run: 
-          OAS_VERSION=$(yq '.info.version' ./oas/openapi.yaml)
+          sudo snap install yq && 
+          OAS_VERSION=$(yq '.info.version' oas/openapi.yaml)
           echo "OAS_VERSION=${OAS_VERSION}" >> $GITHUB_ENV 
           UNIQUE_VERSION=${OAS_VERSION}-${{ github.sha }}-service
           echo "version=${UNIQUE_VERSION}" >> $GITHUB_ENV
