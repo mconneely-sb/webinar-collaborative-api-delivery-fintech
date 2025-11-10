@@ -39,7 +39,7 @@ jobs:
       - run: echo "application_name=${application_name:-${application_name_default}}" >> $GITHUB_ENV
       - run: |
             sudo snap install yq && 
-            OAS_VERSION=$(yq '.info.version' oas/openapi.yaml)
+            OAS_VERSION=$(yq '.info.version' ./oas/openapi.yaml)
             echo "OAS_VERSION=${OAS_VERSION}" >> $GITHUB_ENV 
     env:
       application_name: ${{ github.event.inputs.application_name }}
