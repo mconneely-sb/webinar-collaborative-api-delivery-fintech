@@ -42,9 +42,9 @@ jobs:
     env:
       application_name: ${{ github.event.inputs.application_name }}
       application_name_default: SmartBearCoin-Payee-Provider
-      oas_version: ${{ env.OAS_VERSION }}
     outputs:
       application_name: ${{ env.application_name }}
+      oas_ver: ${{ env.OAS_VERSION }}
 
   test-local:
     needs: setup
