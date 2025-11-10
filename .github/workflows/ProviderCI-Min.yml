@@ -37,11 +37,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "application_name=${application_name:-${application_name_default}}" >> $GITHUB_ENV
+      - run: |
+            sudo snap install yq && 
+            OAS_VERSION=$(yq '.info.version' oas/openapi.yaml)
+            echo "OAS_VERSION=${OAS_VERSION}" >> $GITHUB_ENV 
     env:
       application_name: ${{ github.event.inputs.application_name }}
       application_name_default: SmartBearCoin-Payee-Provider
     outputs:
       application_name: ${{ env.application_name }}
+      oas_ver: ${{ env.OAS_VERSION }}
 
   validate-openapi-against-rules:
     runs-on: ubuntu-latest
@@ -63,7 +68,7 @@ jobs:
           swaggerhub api:validate $swaggerhub_owner/$swaggerhub_api_name/$swaggerhub_api_version -c
   
   test-local:
-    needs: setup
+    needs: validate-openapi-against-rules
     runs-on: ubuntu-latest
     env:
       application_name: ${{ needs.setup.outputs.application_name }}
