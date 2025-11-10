@@ -37,17 +37,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "application_name=${application_name:-${application_name_default}}" >> $GITHUB_ENV
-      - run: |
-            sudo snap install yq && 
-            OAS_VERSION=$(yq '.info.version' ./oas/openapi.yaml)
-            echo "OAS_VERSION=${OAS_VERSION}" >> $GITHUB_ENV 
     env:
       application_name: ${{ github.event.inputs.application_name }}
       application_name_default: SmartBearCoin-Payee-Provider
     outputs:
       application_name: ${{ env.application_name }}
-      oas_ver: ${{ env.OAS_VERSION }}
 
+  read-openapi-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Run yq as an action to read the field
+      - name: Read info.version with yq
+        id: openapi
+        uses: mikefarah/yq@v4
+        with:
+          bash: yq '.info.version' .oas/openapi.yaml
+        
   validate-openapi-against-rules:
     runs-on: ubuntu-latest
     needs: setup
