@@ -29,7 +29,6 @@ env:
   demo_deploy: true
   SWAGGERHUB_API_KEY: ${{ secrets.SWAGGERHUB_API_KEY }}
   swaggerhub_api_name: smartbearcoin-payees-api 
-  swaggerhub_api_version: 1.0.0 
   swaggerhub_owner: MConneely
 jobs:
   setup:
@@ -75,12 +74,12 @@ jobs:
         env:
           SWAGGERHUB_API_KEY: ${{secrets.SWAGGERHUB_API_KEY}}
         run: |
-          swaggerhub api:get $swaggerhub_owner/$swaggerhub_api_name/$openapi_version
+          swaggerhub api:get $swaggerhub_owner/$swaggerhub_api_name/${{ needs.read-openapi-version.outputs.openapi_version }}
       - name: Validate definition
         env:
           SWAGGERHUB_API_KEY: ${{secrets.SWAGGERHUB_API_KEY}}      
         run: |
-          swaggerhub api:validate $swaggerhub_owner/$swaggerhub_api_name/$openapi_version -c
+          swaggerhub api:validate $swaggerhub_owner/$swaggerhub_api_name/${{ needs.read-openapi-version.outputs.openapi_version }} -c
   
   test-local:
     needs: validate-openapi-against-rules
