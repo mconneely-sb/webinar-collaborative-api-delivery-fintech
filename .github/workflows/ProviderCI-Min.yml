@@ -49,7 +49,6 @@ jobs:
   test-local:
     needs: setup
     runs-on: ubuntu-latest
-    if: false
     env:
       application_name: ${{ needs.setup.outputs.application_name }}
     steps:
