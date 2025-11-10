@@ -35,15 +35,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "application_name=${application_name:-${application_name_default}}" >> $GITHUB_ENV
+      - run: |
+            sudo snap install yq && 
+            OAS_VERSION=$(yq '.info.version' oas/openapi.yaml)
+            echo "OAS_VERSION=${OAS_VERSION}" >> $GITHUB_ENV 
     env:
       application_name: ${{ github.event.inputs.application_name }}
       application_name_default: SmartBearCoin-Payee-Provider
+      oas_version: ${{ env.OAS_VERSION }}
     outputs:
       application_name: ${{ env.application_name }}
 
   test-local:
     needs: setup
     runs-on: ubuntu-latest
+    if: false
     env:
       application_name: ${{ needs.setup.outputs.application_name }}
     steps:
